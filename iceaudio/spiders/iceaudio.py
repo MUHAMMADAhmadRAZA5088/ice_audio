@@ -1,47 +1,95 @@
 """Module providingFunction printing python version."""
 import scrapy
 import re
+
+
 class IceSpider(scrapy.Spider):
-    """hello"""
+    """This class performs the data scraping of IceAudio.no"""
     name = "iceaudio"
     allowed_domains = ["iceaudio.no"]
     start_urls = ["https://www.iceaudio.no/"]
 
+
     def parse(self, response):
-        anchor_text=response.xpath('//ul[@id="treemenu1"]/li/a/text()').getall()
-        anchor=response.xpath('//ul[@id="treemenu1"]/li/a/@href').getall()
-        
-        for count in range(0,len(anchor)):
-            yield  response.follow(anchor[count], callback=self.parse_product, meta={'Main_categories' : anchor_text[count]})
+        """Text is used to collect data (product name) for the main_category.
+           anchors is used to collect all  link for the main categories.
+           This function send the information to the parse_product.
+          """
+        text=response.xpath('//ul[@id="treemenu1"]/li/a/text()').getall()
+        anchors=response.xpath('//ul[@id="treemenu1"]/li/a/@href').getall()
+        for count in range(0,len(anchors)):
+            yield  response.follow  (anchors[count], callback=self.parse_product,
+                                     meta={'Main_categories' : text[count]}
+                                    )
+
 
     def parse_product(self, response):
+        """
+        anchors is used to collect all  link for the Sub categories.
+        products is used to collect all  product links"
+        category_1 is used to collect data (product name) for the sub_category
+        This function send the information to the parse_product_item and parse_product_scraping
+        """
+        products=response.xpath('//div[@id="container"]//div[@id="sub_content"]//tr[1]/td/a/@href').getall()
+        anchors = response.xpath("//div[@id='sub_content']//a/@href").getall()
+        sub_category=response.xpath("//div[@id='sub_content']//a/img/@alt").getall()
+        if products:
+            if products is not None:
+                yield from response.follow_all  (products,
+                                                 callback=self.parse_product_scraping ,
+                                                 dont_filter = True,
+                                                 meta={
+                                                     'Main_categories':response.meta.get('Main_categories')
+                                                      }
+                                                )
 
-        new_product_anchor=response.xpath('//div[@id="container"]//div[@id="sub_content"]//tr[1]/td/a/@href').getall()
-        anchor = response.xpath("//div[@id='sub_content']//a/@href").getall()
-        category_1=response.xpath("//div[@id='sub_content']//a/img/@alt").getall()
-        if new_product_anchor:
-            if new_product_anchor is not None:
-                yield from response.follow_all(new_product_anchor, callback=self.parse_product_scraping ,dont_filter = True, meta={'Main_categories':response.meta.get('Main_categories')})
-
-        elif anchor:
-            for count in range(0,len(anchor)):
-                yield  response.follow(anchor[count], callback=self.parse_product_item, meta={'Main_categories':response.meta.get('Main_categories'),'Category_1':category_1[count]})
+        elif anchors:
+            for count in range(0,len(anchors)):
+                yield  response.follow  ( anchors[count],
+                                          callback=self.parse_product_item, 
+                                          meta={
+                                              'Main_categories':response.meta.get('Main_categories'),
+                                              'Category_1':sub_category[count]
+                                               }
+                                        )
     
+
     def parse_product_item(self, response):
-        """by defualt Function"""
-        anchor = response.xpath('//div[@id="container"]//div[@id="sub_content"]//tr[1]/td/a/@href').getall()
-        yield from response.follow_all(anchor, callback=self.parse_product_scraping ,dont_filter = True, meta={'Main_categories':response.meta.get('Main_categories'),'Category_1':response.meta.get('Category_1'),'Category_2':response.meta.get('Category_2')})
+        """
+        anchors is used to collect all  link products.
+        pagination_links is used to collect link for the Sub categories
+        This function send the information to the  parse_product_scraping
+        """
+        anchors = response.xpath('//div[@id="container"]//div[@id="sub_content"]//tr[1]/td/a/@href').getall()
+        yield from response.follow_all  ( anchors,
+                                          callback=self.parse_product_scraping ,
+                                          dont_filter = True, 
+                                          meta={
+                                                'Main_categories':response.meta.get('Main_categories'),
+                                                'Category_1':response.meta.get('Category_1'),
+                                                'Category_2':response.meta.get('Category_2')
+                                               }
+                                        )
 
         pagination_links = response.xpath('//div[@id="container"]/div[@id="left"]/div[@id="sub_content"]/a/@href').getall()
-        category_2 = response.xpath('//div[@id="container"]/div[@id="left"]/div[@id="sub_content"]/a/img/@alt').getall()
+        sub_category = response.xpath('//div[@id="container"]/div[@id="left"]/div[@id="sub_content"]/a/img/@alt').getall()
         if pagination_links is not None:
-            for count in range(0,len(pagination_links)):
-                yield  response.follow(pagination_links[count], callback=self.parse_product_item, meta={'Main_categories':response.meta.get('Main_categories'),'Category_1':response.meta.get('Category_1'),'Category_2':category_2[count]})
+            for counter in range(0,len(pagination_links)):
+                yield  response.follow  (
+                                            pagination_links[counter], 
+                                            callback=self.parse_product_item,
+                                            meta={
+                                                'Main_categories':response.meta.get('Main_categories'),
+                                                'Category_1':response.meta.get('Category_1'),
+                                                'Category_2':sub_category[counter]
+                                              }
+                                        )
             
 
-
     def parse_product_scraping(self, response):
-        """by defualt Function"""
+        """
+        The function is to scrap the data.
+        """
         img_1 = []
         img_2 = []
         img_3 = []
@@ -59,7 +107,6 @@ class IceSpider(scrapy.Spider):
         img_15 = []
         img_16 = []
         img_17 = []
-
         images =  response.xpath("//div[@id='PInfo_Left']/img/@src").getall()
         for count in range(len(images)+1):
 
@@ -98,7 +145,117 @@ class IceSpider(scrapy.Spider):
             elif count == 17:
                 img_17.append(images[16])
 
-        com_brand=[ "Mercedes", "4 Connect", "5 Connect", "ACV", "ACX", "AH", "AI-SONIC", "Alpine","Antenne (DAB)","Antenne adapter","Antennepisk",  "Antennesplitter", "Asuka","Audio/Video interface","Audison","Aura","BLACKVUE","Blam","Blaupunkt","BOSS","Brax","Cadence","Caliber","CarAudioSystems","CDS","Cerwin Vega","Clarion","Comfort Modul","ConnectED","Connection","Connects2","Continental","Crunch","DAB integrering","DAB-antenne","DASHCAM","DD Audio","DEFA","Dension","ESX","Fiamm","Firefly","Focal","G4Audiio","Garmin","Ground Zero","Halo","Hardstone","Harman/Kardon","Helix","HELIX Q","Hertz","Hertz Marine","Hifonics","In2digi","JBL","Jensen","JL Audio","JVC","Kenwood","Kicker","Kram Telecom","Kufatec","Lukas","MAGNAT","Match","MB Quart","Metra","MTX Audio","MUSWAY","MOSCONI","Nextbase","NVX","PAC","Parrot","PhoenixGold","Pioneer","Polk Audio","Power","Prime","Punch","Pure","Pyle","QVIA","Renegade","Roberts","Rockford Fosgate","Sangean","Scosche","Sony","Sound Marine","Soundmagus","SoundQuest","Stinger","Strands","TARAMPS","Teleskopantenne","Tesla","TFT","AutoDAB","Toma Carparts","uniDAB","VCAN","Video in motion","Xplore","Gladen","4Connect","SounDigital","Blam","SoundQubed" ]
+        com_brand=[ "Mercedes",
+                    "4 Connect",
+                    "5 Connect",
+                    "ACV",
+                    "ACX",
+                    "AH",
+                    "AI-SONIC",
+                    "Alpine",
+                    "Antenne (DAB)",
+                    "Antenne adapter",
+                    "Antennepisk",  
+                    "Antennesplitter", 
+                    "Asuka",
+                    "Audio/Video interface",
+                    "Audison",
+                    "Aura",
+                    "BLACKVUE",
+                    "Blam",
+                    "Blaupunkt",
+                    "BOSS",
+                    "Brax",
+                    "Cadence",
+                    "Caliber",
+                    "CarAudioSystems",
+                    "CDS",
+                    "Cerwin Vega",
+                    "Clarion",
+                    "Comfort Modul",
+                    "ConnectED",
+                    "Connection",
+                    "Connects2",
+                    "Continental",
+                    "Crunch",
+                    "DAB integrering",
+                    "DAB-antenne",
+                    "DASHCAM",
+                    "DD Audio",
+                    "DEFA",
+                    "Dension",
+                    "ESX",
+                    "Fiamm",
+                    "Firefly",
+                    "Focal",
+                    "G4Audiio",
+                    "Garmin",
+                    "Ground Zero",
+                    "Halo",
+                    "Hardstone",
+                    "Harman/Kardon",
+                    "Helix",
+                    "HELIX Q",
+                    "Hertz",
+                    "Hertz Marine",
+                    "Hifonics",
+                    "In2digi",
+                    "JBL",
+                    "Jensen",
+                    "JL Audio",
+                    "JVC",
+                    "Kenwood",
+                    "Kicker",
+                    "Kram Telecom",
+                    "Kufatec",
+                    "Lukas",
+                    "MAGNAT",
+                    "Match",
+                    "MB Quart",
+                    "Metra",
+                    "MTX Audio",
+                    "MUSWAY",
+                    "MOSCONI",
+                    "Nextbase",
+                    "NVX",
+                    "PAC",
+                    "Parrot",
+                    "PhoenixGold",
+                    "Pioneer",
+                    "Polk Audio",
+                    "Power",
+                    "Prime",
+                    "Punch",
+                    "Pure",
+                    "Pyle",
+                    "QVIA",
+                    "Renegade",
+                    "Roberts",
+                    "Rockford Fosgate",
+                    "Sangean",
+                    "Scosche",
+                    "Sony",
+                    "Sound Marine",
+                    "Soundmagus",
+                    "SoundQuest",
+                    "Stinger",
+                    "Strands",
+                    "TARAMPS",
+                    "Teleskopantenne",
+                    "Tesla",
+                    "TFT",
+                    "AutoDAB",
+                    "Toma Carparts",
+                    "uniDAB",
+                    "VCAN",
+                    "Video in motion",
+                    "Xplore",
+                    "Gladen",
+                    "4Connect",
+                    "SounDigital",
+                    "Blam",
+                    "SoundQubed"
+                      ]
         heading= response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get()
         company_brand=""
 
@@ -107,39 +264,36 @@ class IceSpider(scrapy.Spider):
             if brand in heading:
                 if brand:
                     company_brand=brand
-                else:
-                    company_brand=""
 
         description =  response.xpath('//div[@id="PInfo_Right"]/ul/li/text()').getall()
         data_specific=response.xpath('//div[@id="PInfo_Right"]/ul/li[3]//text()').get()
         data_condition=response.xpath('//div[@id="PInfo_Right"]/ul/li[1]//text()').get()
         years=[]
-        Car_years=[]
+        car_years=[]
         car_brand=[]
-        """"""
         
-        for web_count in description:
+        for interger_value in description:
             for count in range(1985,2023):
-                if str(count) in web_count:
-                    years.append(web_count)
+                if str(count) in interger_value:
+                    years.append(interger_value)
                     break
         
         for data in years:
             
             if ")" in data and "/" in data and len(data)<40 and 30<=len(data) and re.findall("[0-9]", data_specific) and len(data_specific)<40 :
-                val=data.split(")")
-                Car_years.append(val[1])
-                car_val=data.rsplit(" ",4)
-                car_brand.append(car_val[0])
+                value=data.split(")")
+                car_years.append(value[1])
+                car_information=data.rsplit(" ",4)
+                car_brand.append(car_information[0])
             elif "/" in data and ">" in data and len(data)<40 and 30<=len(data) and re.findall("[0-9]", data_condition) and len(data_condition)<40 :
-                val=data.split(" ",2)
-                Car_years.append(val[2])
-                car_val=data.rsplit(" ",4)
-                car_brand.append(car_val[0])
+                value=data.split(" ",2)
+                car_years.append(value[2])
+                car_information=data.rsplit(" ",4)
+                car_brand.append(car_information[0])
             elif ">" in data and "-" in data and len(data)<30  and 15<=len(data) and (len(re.findall("-", data)))==1 and re.findall("[0-9]", data_specific) and  len(data_specific)<30:
-                val=data.rsplit(" ",2)
-                Car_years.append(val[1])
-                car_brand.append(val[0])
+                value=data.rsplit(" ",2)
+                car_years.append(value[1])
+                car_brand.append(value[0])
   
         yield{
                 "product Id" : response.xpath("//div[@id='PInfo_Right']//tr[1]/td[@align='right']/text()").get(),
@@ -154,7 +308,7 @@ class IceSpider(scrapy.Spider):
                 "Product Information" : response.xpath("//div[@id='PInfo_Top']/text()").get(),
                 "Car brand" : company_brand,
                 "Car model" :"".join( car_brand),
-                "Car year" : "".join(Car_years),
+                "Car year" : "".join(car_years),
                 "url":str(response),
                 "Main Price" : response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get(),
                 "Discount Price" : "",
