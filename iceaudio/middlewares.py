@@ -24,7 +24,7 @@ class IceaudioSpiderMiddleware:
     def process_spider_input(self, response, spider):
         # Called for each response that goes through the spider
         # middleware and into the spider.
-
+       
         # Should return None or raise an exception.
         return None
 
@@ -80,7 +80,9 @@ class IceaudioDownloaderMiddleware:
         #   installed downloader middleware will be called
         return None
 
+        
     def process_response(self, request, response, spider):
+        
         # Called with the response returned from the downloader.
 
         # Must either;
@@ -101,3 +103,27 @@ class IceaudioDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+
+# ----------------------------------------------------------------
+from scrapy.exceptions import IgnoreRequest
+from scrapy.utils.project import get_project_settings
+
+class KeywordFilterMiddleware(object):
+    def __init__(self):
+        self.keywords = get_project_settings().get('KEYWORDS')
+
+    def process_response(self, request, response, spider):
+        for keyword, synonyms in self.keywords.items():
+            # Check if any of the synonyms are present in the response body
+            if any(synonym in response.text for synonym in synonyms):
+                raise IgnoreRequest("Filtered response: {}".format(response.url))
+        
+        return response
+
+
+
+
+
+
+
