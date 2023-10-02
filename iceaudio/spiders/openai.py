@@ -1,52 +1,49 @@
 """Module providingFunction printing python version."""
+
 import scrapy
 import re
 import os
-import pandas as pd
 import openai
 import json
 
+import pandas as pd
 from langchain.llms import OpenAI
 from langchain.document_loaders.csv_loader import CSVLoader
-os.environ["OPENAI_API_KEY"]="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"
+from langchain.agents import create_csv_agent
+
+os.environ["OPENAI_API_KEY"] = "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"
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 class IceSpider(scrapy.Spider):
-    """This class performs the data scraping of IceAudio.no"""
-    name = "iceaudio"
+    """This class performs the data scraping of IceAudio.no""" 
+
+    name = "ai"
     allowed_domains = ["iceaudio.no"]
     start_urls = ["https://www.iceaudio.no/"]
 
 
     def parse(self, response):
-        """Text is used to collect data (product name) for the main_category.
-           anchors is used to collect all  link for the main categories.
-           This function send the information to the parse_product.
-          """
-        text=response.xpath('//ul[@id="treemenu1"]/li/a/text()').getall()
-        anchors=response.xpath('//ul[@id="treemenu1"]/li/a/@href').getall()
+
+        text = response.xpath('//ul[@id="treemenu1"]/li/a/text()').getall()
+        anchors = response.xpath('//ul[@id="treemenu1"]/li/a/@href').getall()
+
         for count in range(0,len(anchors)):
-            yield  response.follow  (anchors[count], callback=self.parse_product,
-                                     meta={'Main_categories' : text[count]}
+            yield  response.follow  (anchors[count], 
+                                     callback = self.parse_product,
+                                     meta = {'Main_categories' : text[count]}
                                     )
 
 
     def parse_product(self, response):
-        """
-        anchors is used to collect all  link for the Sub categories.
-        products is used to collect all  product links"
-        category_1 is used to collect data (product name) for the sub_category
-        This function send the information to the parse_product_item and parse_product_scraping
-        """
-        products=response.xpath('//div[@id="container"]//div[@id="sub_content"]//tr[1]/td/a/@href').getall()
-        anchors = response.xpath("//div[@id='sub_content']//a/@href").getall()
-        sub_category=[]
-        category=response.xpath("//div[@id='sub_content']//a/img/@alt").getall()
-        for i in range(0,len(category)):
-            # number = re.findall("[0-9]", category[i])
 
-            if category[i].isdigit() or category[i]=="6,5" or category[i]=="6x9" or category[i]=="5,25" or category[i]=="18 - 33":
+        products = response.xpath('//div[@id="container"]//div[@id="sub_content"]//tr[1]/td/a/@href').getall()
+        anchors = response.xpath("//div[@id='sub_content']//a/@href").getall()
+        sub_category = []
+        category = response.xpath("//div[@id='sub_content']//a/img/@alt").getall()
+        for i in range(0,len(category)):
+            
+            if category[i].isdigit() or category[i] == "6,5" or category[i] == "6x9" or category[i] == "5,25" or category[i] == "18 - 33":
                 sub_category.append(category[i]+'"')
             else:
                 sub_category.append(category[i])
@@ -55,7 +52,7 @@ class IceSpider(scrapy.Spider):
             if products is not None:
                 yield from response.follow_all  (
                             products,
-                            callback=self.parse_product_scraping ,
+                            callback = self.parse_product_scraping ,
                             dont_filter = True,
                             meta={
                             'Main_categories':response.meta.get('Main_categories')}
@@ -74,16 +71,11 @@ class IceSpider(scrapy.Spider):
 
 
     def parse_product_item(self, response):
-        """
-        anchors is used to collect all  link products.
-        pagination_links is used to collect link for the Sub categories
-        This function send the information to the  parse_product_scraping
-        """
-
+     
         anchors = response.xpath('//div[@id="container"]//div[@id="sub_content"]//tr[1]/td/a/@href').getall()
         yield from response.follow_all  (
             anchors,
-            callback=self.parse_product_scraping ,
+            callback = self.parse_product_scraping ,
             dont_filter = True,
             meta={
                 'Main_categories':response.meta.get('Main_categories'),
@@ -94,13 +86,12 @@ class IceSpider(scrapy.Spider):
 
         pagination_links = response.xpath('//div[@id="container"]/div[@id="left"]/div[@id="sub_content"]/a/@href').getall()
         category = response.xpath('//div[@id="container"]/div[@id="left"]/div[@id="sub_content"]/a/img/@alt').getall()
-        sub_category=[]
+        sub_category = []
         for i in range(0,len(category)):
 
             try:
-                # number = re.findall("[0-9]", category[i])
-
-                if category[i].isdigit() or category[i]=="6,5" or category[i]=="6x9" or category[i]=="5,25" or category[i]=="18 - 33":
+                
+                if category[i].isdigit() or category[i] == "6,5" or category[i] == "6x9" or category[i] == "5,25" or category[i] == "18 - 33":
                     sub_category.append(category[i]+'"')
                 else:
                     sub_category.append(category[i])
@@ -112,7 +103,7 @@ class IceSpider(scrapy.Spider):
             for counter in range(0,len(pagination_links)):
                 yield  response.follow  (
                         pagination_links[counter], 
-                        callback=self.parse_product_item,
+                        callback = self.parse_product_item,
                         meta={
                             'Main_categories':response.meta.get('Main_categories'),
                             'Category_1':response.meta.get('Category_1'),
@@ -122,34 +113,36 @@ class IceSpider(scrapy.Spider):
             
 
     def parse_product_scraping(self, response):
-        """
-        The function is to scrap the data.
-        """
+         
         price=response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get()
         if price != None:
-            product_images=[]
-            file_pdf=[]
-            images=[]
+            product_images = []
+            file_pdf = []
+            images = []
+
             img =  response.xpath("//div[@id='PInfo_Left_bilder']/a/@href").getall()
             for i in img:
+
                 try:
-                    check_img=i.replace('./','http://iceaudio.no/',1)
+                    check_img = i.replace('./','http://iceaudio.no/',1)
+
                     if check_img.endswith(".jpg"):
                         images.append(check_img)
                     elif check_img.endswith(".pdf"):
                         file_pdf.append(check_img)
+
                 except Exception as ex: 
                     print("Error")
             
             for i in range(0,17):
+
                 try:
                     product_images.append(images[i])
 
                 except Exception as ex: 
                     product_images.append("")
 
-
-            brand_names=[
+            brand_names = [
                     "4 Connect",
                     "5 Connect",
                     "4 Power",
@@ -271,54 +264,98 @@ class IceSpider(scrapy.Spider):
                         ]
             
             heading= response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get()
-            company_brand=""
+            company_brand = ""
             for brand in brand_names:
+
                 try:
+
                     if brand.upper() in heading.upper():
                         if brand:
                             company_brand=brand
                             break
+
                 except Exception as ex:
-                    company_brand=""
+                    company_brand = ""
 
-            description =  response.xpath('//div[@id="PInfo_Right"]/ul/li/text()').getall()
-            data_specific=response.xpath('//div[@id="PInfo_Right"]/ul/li[3]//text()').get()
-            data_condition=response.xpath('//div[@id="PInfo_Right"]/ul/li[1]//text()').get()
-            years=[]
-            car_years=[]
-            car_brand=[]
-            try:
-                for interger_value in description:
-                    for i in range(1985,2023):
-                        if str(i) in interger_value:
-                            years.append(interger_value)
-                            break
+            web_data = "".join(response.xpath('//div[@id="PInfo"]//ul//text()').getall())
+            final_brand = []
+            final_model = []
+            final_years = []
             
-                for data in years:
+            if web_data: 
+                
+                df = pd.read_csv('E:\\f_scraper\\car_models.csv')
+
+                brand_csv = []
+                for brand in set(df['Brand']):
+                    if brand in web_data:
+                        brand_csv.append(brand.strip())
+
+                model_csv = []
+                for model in set(df['Model']):
+                    if model in web_data:
+                        model_csv.append(model)
+                
+                model_csv  = [item for item in model_csv if len(item.strip()) > 0]
+                years = re.findall(r'\b(198[5-9]|199\d|200\d|202[0-3])\b', "".join(response.xpath('//div[@id="PInfo"]//ul//text()').getall()))
+                years = set(years)
+                final_brand = []
+                final_model = []
+                final_years = []
+
+                last_brand = []
+                last_model = []
+                last_years = []
+                
+                if  brand_csv and model_csv:
+                    for brands in brand_csv: 
+                        brand_df = df[df["Brand"] == brands]
+
+                        for model_df in set(brand_df["Model"]):
+                            
+                            for models in set(model_csv):
+                                if model_df == models:
+                                    final_model.append(model_df)
+                                    final_brand.append(brands)
+
+                if brand_csv and final_model == []:
+                    final_brand.extend(brand_csv)
+
+
+                if years and  final_model:   
+                    for count in range(0,len(final_brand)):
+                        inner_year = [] 
+                        csv_year = df[(df['Brand'] == final_brand[count]) & (df['Model'] == final_model[count] )]
                     
-                    if ")" in data and "/" in data and len(data)<40 and 30<=len(data) and re.findall("[0-9]", data_specific) and len(data_specific)<40 :
-                        value=data.split(")")
-                        car_years.append(value[1])
-                        car_information=data.rsplit(" ",4)
-                        car_brand.append(car_information[0])
-                    elif "/" in data and ">" in data and len(data)<40 and 30<=len(data) and re.findall("[0-9]", data_condition) and len(data_condition)<40 :
-                        value=data.split(" ",2)
-                        car_years.append(value[2])
-                        car_information=data.rsplit(" ",4)
-                        car_brand.append(car_information[0])
-                    elif ">" in data and "-" in data and len(data)<30  and 15<=len(data) and (len(re.findall("-", data)))==1 and re.findall("[0-9]", data_specific) and  len(data_specific)<30:
-                        value=data.rsplit(" ",2)
-                        car_years.append(value[1])
-                        car_brand.append(value[0])
+                        for  year in years:
+                            for df_year in csv_year['Year']:
+                                if str(df_year) == year:
+                                    inner_year.append(year)
+                        
 
-            except Exception as ex:
+                        inner_year  = [item for item in inner_year if len(item.strip()) > 0]
+                        try:
+                            for year in inner_year:
+                                last_brand.append(final_brand[count])
+                                last_model.append(final_model[count])
+                                last_years.append(year)
+                        except :
+                            last_brand.append(final_brand[count])
+                            last_model.append(final_model[count]) 
+                            last_years.append('')
 
-                car_years.append("")
-                car_brand.append("")
+                if last_brand and last_model:
+                    final_brand.clear()
+                    final_model.clear()
+                    final_years.clear()
+                    final_brand.extend(last_brand)
+                    final_model.extend(last_model)
+                    final_years.extend(last_years)
 
+                
+       
             response_obj = dict({
                     "product Id" : response.xpath("//div[@id='PInfo_Right']//tr[1]/td[@align='right']/text()").get().strip(),
-                    
                     "Main Category" : response.meta.get('Main_categories'),
                     "Category 1" : response.meta.get('Category_1'),
                     "Category 2" : response.meta.get('Category_2'),
@@ -328,9 +365,9 @@ class IceSpider(scrapy.Spider):
                     "Product Brand" :company_brand,
                     "Product Name" : response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get().strip(),
                     "Product Information" : response.xpath("//div[@id='PInfo_Top']/text()").get().replace("\r\n",'').strip(),
-                    # "Car brand" : company_brand,
-                    # "Car model" :"".join( car_brand),
-                    # "Car year" : "".join(car_years),
+                    "Car Brand" : final_brand,
+                    "Car Model" : final_model,
+                    "Car Years" : final_years,
                     "url":response.url,
                     "Main Price" : response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get().strip(),
                     "Discount Price" : "",
@@ -339,10 +376,7 @@ class IceSpider(scrapy.Spider):
                     "source" : "www.iceaudio.no",
             })
 
-
             for i in range(1, 18):
                 response_obj["Picture {}".format(i)] = product_images[i-1]
             
             yield response_obj
-
-                
