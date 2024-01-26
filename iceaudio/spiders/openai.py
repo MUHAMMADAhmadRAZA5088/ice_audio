@@ -3,16 +3,7 @@
 import scrapy
 import re
 import os
-import openai
-import json
-
 import pandas as pd
-from langchain.llms import OpenAI
-from langchain.document_loaders.csv_loader import CSVLoader
-from langchain.agents import create_csv_agent
-
-os.environ["OPENAI_API_KEY"] = "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"
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 class IceSpider(scrapy.Spider):
@@ -143,125 +134,142 @@ class IceSpider(scrapy.Spider):
                     product_images.append("")
 
             brand_names = [
-                    "4 Connect",
-                    "5 Connect",
-                    "4 Power",
-                    "4POWER",
-                    "4 Connect",
-                    "ACV",
-                    "ACX",
-                    "AH",
-                    "AI-SONIC",
-                    "Alpine",
-                    "Antenne (DAB)",
-                    "Antenne adapter",
-                    "Antennepisk",
-                    "Antennesplitter",
-                    "Asuka",
-                    "Audio/Video interface",
-                    "Audison",
-                    "Aura",
-                    "BLACKVUE",
-                    "Blam",
-                    "Blaupunkt",
-                    "BOSS",
-                    "Brax",
-                    "Cadence",
-                    "Caliber",
-                    "CarAudio Systems",
-                    "CDS",
-                    "Cerwin Vega",
-                    "Clarion",
-                    "Comfort Modul",
-                    "ConnectED",
-                    "Connection",
-                    "Connects2",
-                    "Continental",
-                    "Crunch",
-                    "DAB integrering",
-                    "DAB-antenne",
-                    "DASHCAM",
-                    "DD Audio",
-                    "DEFA",
-                    "Dension",
-                    "ESX",
-                    "Fiamm",
-                    "Firefly",
-                    "Focal",
-                    "G4Audiio",
-                    "Garmin",
-                    "Ground Zero",
-                    "Halo",
-                    "Hardstone",
-                    "Harman/Kardon",
-                    "Helix",
-                    "HELIX Q",
-                    "Hertz",
-                    "Hertz Marine",
-                    "Hifonics",
-                    "In2digi",
-                    "JBL",
-                    "Jensen",
-                    "JL Audio",
-                    "JVC",
-                    "Kenwood",
-                    "Kicker",
-                    "Kram Telecom",
-                    "Kufatec",
-                    "Lukas",
-                    "MAGNAT",
-                    "Match",
-                    "MB Quart",
-                    "Metra",
-                    "MTX Audio",
-                    "MUSWAY",
-                    "MOSCONI",
-                    "Nextbase",
-                    "NVX",
-                    "PAC",
-                    "Parrot",
-                    "PhoenixGold",
-                    "Pioneer",
-                    "Polk Audio",
-                    "Power",
-                    "Prime",
-                    "Punch",
-                    "Pure",
-                    "Pyle",
-                    "QVIA",
-                    "Renegade",
-                    "Roberts",
-                    "Rockford Fosgate",
-                    "Sangean",
-                    "Scosche",
-                    "Sony",
-                    "Sound Marine",
-                    "Soundmagus",
-                    "SoundQuest",
-                    "Stinger",
-                    "Strands",
-                    "TARAMPS",
-                    "Teleskopantenne",
-                    "TFT",
-                    "AutoDAB",
-                    "Toma Carparts",
-                    "uniDAB",
-                    "VCAN",
-                    "Video in motion",
-                    "Xplore",
-                    "Gladen",
-                    "4Connect",
-                    "SounDigital",
-                    "Blam",
-                    "SoundQubed",
-                    "Diamond Audio",
-                    "BLAM",
-                    "DIRECTOR",
-                    "FOUR Connect",
-                    "GLADEN",
-                    "PEXMAN",
-                    "Boss",
-                        ]
+                '4 Connect',
+                '4 Power',
+                '4Connect',
+                '4POWER',
+                '5 Connect',
+                'ACV',
+                'ACX',
+                'AH',
+                'AI-SONIC',
+                'Alpine',
+                'Alpine',
+                'Ampire',
+                'Antenne (DAB)',
+                'Antenne adapter',
+                'Antennepisk',
+                'Antennesplitter',
+                'Asuka',
+                'Audio/Video interface',
+                'Audison',
+                'Aura',
+                'AutoDAB',
+                'Axton',
+                'BeatSonic',
+                'BLACKVUE',
+                'Blam',
+                'Blam',
+                'BLAM',
+                'Blaupunkt',
+                'BOSS',
+                'Boss',
+                'Brax',
+                'Cadence',
+                'Caliber',
+                'CarAudio Systems',
+                'CDS',
+                'Cerwin Vega',
+                'Clarion',
+                'Comfort Modul',
+                'ConnectED',
+                'Connection',
+                'Connects2',
+                'Continental',
+                'Crunch',
+                'DAB integrering',
+                'DAB-antenne',
+                'DASHCAM',
+                'DD Audio',
+                'DEFA',
+                'Dension',
+                'Diamond Audio',
+                'DIRECTOR',
+                'Dynamat',
+                'EMPHASER',
+                'ESX',
+                'Eton',
+                'Fiamm',
+                'Firefly',
+                'Focal',
+                'FOUR Audio',
+                'FOUR Connect',
+                'G4Audiio',
+                'Garmin',
+                'Gladen',
+                'GLADEN',
+                'Ground  Zero',
+                'Ground Zero',
+                'Halo',
+                'Hardstone',
+                'Harman/Kardon',
+                'Helix',
+                'HELIX Q',
+                'Hertz',
+                'Hertz Marine',
+                'Hifonics',
+                'In2digi',
+                'JBL',
+                'Jensen',
+                'JL Audio',
+                'JL Audio',
+                'JVC',
+                'JVC',
+                'Kenwood',
+                'Kicker',
+                'Kicker',
+                'Kram Telecom',
+                'Kufatec',
+                'Lukas',
+                'MAGNAT',
+                'Match',
+                'MB Quart',
+                'Metra',
+                'MOSCONI',
+                'MTX',
+                'MTX Audio',
+                'MUSWAY',
+                'Nextbase',
+                'NVX',
+                'PAC',
+                'PAC',
+                'Parrot',
+                'PEXMAN',
+                'PhoenixGold',
+                'Pioneer',
+                'Polk Audio',
+                'Power',
+                'Prime',
+                'Punch',
+                'Pure',
+                'Pyle',
+                'QVIA',
+                'Renegade',
+                'RetroSound',
+                'Roberts',
+                'Rockford Fosgate',
+                'Sangean',
+                'Scosche',
+                'Sony',
+                'Sound Marine',
+                'SounDigital',
+                'Soundmagus',
+                'SoundQubed',
+                'SoundQuest',
+                'Stinger',
+                'Stinger',
+                'Strands',
+                'TARAMPS',
+                'Teleskopantenne',
+                'TFT',
+                'Toma Carparts',
+                'uniDAB',
+                'VCAN',
+                'Video in motion',
+                'Xplore',
+                'Xzent',
+                'Zenec'
+            ]
             
             heading= response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get()
             company_brand = ""
@@ -271,7 +279,7 @@ class IceSpider(scrapy.Spider):
 
                     if brand.upper() in heading.upper():
                         if brand:
-                            company_brand=brand
+                            company_brand = brand
                             break
 
                 except Exception as ex:
@@ -284,8 +292,8 @@ class IceSpider(scrapy.Spider):
             
             if web_data: 
                 
-                df = pd.read_csv('E:\\f_scraper\\car_models.csv')
-
+                df = pd.read_csv('car_models.csv')
+                
                 brand_csv = []
                 for brand in set(df['Brand']):
                     if brand in web_data:
@@ -353,30 +361,131 @@ class IceSpider(scrapy.Spider):
                     final_years.extend(last_years)
 
                 
-       
-            response_obj = dict({
-                    "product Id" : response.xpath("//div[@id='PInfo_Right']//tr[1]/td[@align='right']/text()").get().strip(),
-                    "Main Category" : response.meta.get('Main_categories'),
-                    "Category 1" : response.meta.get('Category_1'),
-                    "Category 2" : response.meta.get('Category_2'),
-                    "Category 3" : "",
-                    "Category 4" : "",
-                    "Category 5" : "",
-                    "Product Brand" :company_brand,
-                    "Product Name" : response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get().strip(),
-                    "Product Information" : response.xpath("//div[@id='PInfo_Top']/text()").get().replace("\r\n",'').strip(),
-                    "Car Brand" : final_brand,
-                    "Car Model" : final_model,
-                    "Car Years" : final_years,
-                    "url":response.url,
-                    "Main Price" : response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get().strip(),
-                    "Discount Price" : "",
-                    "product Discription":response.xpath('//div[@id="PInfo"]//ul').get(),
-                    "file pdf":file_pdf,
-                    "source" : "www.iceaudio.no",
-            })
+            if response.meta.get('Main_categories') != "Biltilpasset":
+                if final_brand and final_model and final_years:
 
-            for i in range(1, 18):
-                response_obj["Picture {}".format(i)] = product_images[i-1]
-            
-            yield response_obj
+                    for i in range(len(final_brand)):
+                        response_obj = dict({
+                                "product Id" : response.xpath("//div[@id='PInfo_Right']//tr[1]/td[@align='right']/text()").get().strip(),
+                                "Main Category" : response.meta.get('Main_categories'),
+                                "Category 1" : response.meta.get('Category_1'),
+                                "Category 2" : response.meta.get('Category_2'),
+                                "Category 3" : "",
+                                "Category 4" : "",
+                                "Category 5" : "",
+                                "Product Brand" :company_brand,
+                                "Product Name" : response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get().strip(),
+                                "Product Information" : response.xpath("//div[@id='PInfo_Top']/text()").get().replace("\r\n",'').strip(),
+                                "Car Brand" : final_brand[i],
+                                "Car Model" : final_model[i],
+                                "Car Years" : final_years[i],
+                                "url":response.url,
+                                "Main Price" : response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get().strip(),
+                                "Discount Price" : "",
+                                "product Discription":response.xpath('//div[@id="PInfo"]//ul').get(),
+                                "file pdf":file_pdf,
+                                "source" : "www.iceaudio.no",
+                        })
+
+                        for i in range(1, 18):
+                            response_obj["Picture {}".format(i)] = product_images[i-1]
+                        
+                        yield response_obj
+
+
+                elif final_brand and final_model == [] and final_years == []:
+                    
+                    for i in range(len(final_brand)):
+                        brand = df[(df['Brand'] == final_brand[i])]
+                        brand_dict = brand.to_dict(orient='records')
+
+                        for count in range(len(brand_dict)):
+                            response_obj = dict({
+                                "product Id" : response.xpath("//div[@id='PInfo_Right']//tr[1]/td[@align='right']/text()").get().strip(),
+                                "Main Category" : response.meta.get('Main_categories'),
+                                "Category 1" : response.meta.get('Category_1'),
+                                "Category 2" : response.meta.get('Category_2'),
+                                "Category 3" : "",
+                                "Category 4" : "",
+                                "Category 5" : "",
+                                "Product Brand" :company_brand,
+                                "Product Name" : response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get().strip(),
+                                "Product Information" : response.xpath("//div[@id='PInfo_Top']/text()").get().replace("\r\n",'').strip(),
+                                "Car Brand" : brand_dict[count]["Brand"],
+                                "Car Model" : brand_dict[count]["Model"],
+                                "Car Years" : brand_dict[count]["Year"],
+                                "url":response.url,
+                                "Main Price" : response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get().strip(),
+                                "Discount Price" : "",
+                                "product Discription":response.xpath('//div[@id="PInfo"]//ul').get(),
+                                "file pdf":file_pdf,
+                                "source" : "www.iceaudio.no",
+                        })
+
+                            for i in range(1, 18):
+                                response_obj["Picture {}".format(i)] = product_images[i-1]
+                            
+                            yield response_obj
+
+                elif final_brand and final_model and final_years == []:
+                    
+                    for i in range(len(final_brand)):
+                        brand = df[(df['Brand'] == final_brand[i]) & (df['Model'] == final_model[i] )]
+                        brand_dict = brand.to_dict(orient='records')
+
+                        for count in range(len(brand_dict)):
+                            response_obj = dict({
+                                "product Id" : response.xpath("//div[@id='PInfo_Right']//tr[1]/td[@align='right']/text()").get().strip(),
+                                "Main Category" : response.meta.get('Main_categories'),
+                                "Category 1" : response.meta.get('Category_1'),
+                                "Category 2" : response.meta.get('Category_2'),
+                                "Category 3" : "",
+                                "Category 4" : "",
+                                "Category 5" : "",
+                                "Product Brand" :company_brand,
+                                "Product Name" : response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get().strip(),
+                                "Product Information" : response.xpath("//div[@id='PInfo_Top']/text()").get().replace("\r\n",'').strip(),
+                                "Car Brand" : brand_dict[count]["Brand"],
+                                "Car Model" : brand_dict[count]["Model"],
+                                "Car Years" : brand_dict[count]["Year"],
+                                "url":response.url,
+                                "Main Price" : response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get().strip(),
+                                "Discount Price" : "",
+                                "product Discription":response.xpath('//div[@id="PInfo"]//ul').get(),
+                                "file pdf":file_pdf,
+                                "source" : "www.iceaudio.no",
+                        })
+
+                            for i in range(1, 18):
+                                response_obj["Picture {}".format(i)] = product_images[i-1]
+                            
+                            yield response_obj
+                
+                else:
+                    response_obj = dict({
+                                "product Id" : response.xpath("//div[@id='PInfo_Right']//tr[1]/td[@align='right']/text()").get().strip(),
+                                "Main Category" : response.meta.get('Main_categories'),
+                                "Category 1" : response.meta.get('Category_1'),
+                                "Category 2" : response.meta.get('Category_2'),
+                                "Category 3" : "",
+                                "Category 4" : "",
+                                "Category 5" : "",
+                                "Product Brand" :company_brand,
+                                "Product Name" : response.xpath("//div[@id='PInfo_Top']/h3/strong/text()").get().strip(),
+                                "Product Information" : response.xpath("//div[@id='PInfo_Top']/text()").get().replace("\r\n",'').strip(),
+                                "Car Brand" : '',
+                                "Car Model" : '',
+                                "Car Years" : '',
+                                "url":response.url,
+                                "Main Price" : response.xpath("//div[@id='PInfo_Right']//tr[3]/td[@align='right']/text()").get().strip(),
+                                "Discount Price" : "",
+                                "product Discription":response.xpath('//div[@id="PInfo"]//ul').get(),
+                                "file pdf":file_pdf,
+                                "source" : "www.iceaudio.no",
+                        })
+
+                    for i in range(1, 18):
+                        response_obj["Picture {}".format(i)] = product_images[i-1]
+                    
+                    yield response_obj
+                
